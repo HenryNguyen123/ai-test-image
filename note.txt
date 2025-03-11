@@ -1,0 +1,6 @@
+bước 1 cài dặt:
+    composer require guzzlehttp/guzzle
+Bước 2: tạo tài khoản gemini, tạo key api
+Bước 3: Cấu hình .env
+    Mở file .env và thêm:
+    GEMINI_API_KEY=your_google_api_key

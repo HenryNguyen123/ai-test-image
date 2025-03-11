@@ -4,3 +4,7 @@ Bước 2: tạo tài khoản gemini, tạo key api
 Bước 3: Cấu hình .env
     Mở file .env và thêm:
     GEMINI_API_KEY=your_google_api_key
+bước 4: https://dashboard.sightengine.com/api-credentials chặn hình phản cảm, bạo lực
+    -tạo key api
+    SIGHTENGINE_USER=your_user_id
+    SIGHTENGINE_SECRET=your_secret_key

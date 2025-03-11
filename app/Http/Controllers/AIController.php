@@ -33,6 +33,25 @@ class AIController extends Controller
         $imagePath = $request->file('image')->getRealPath();
         $imageData = base64_encode(file_get_contents($imagePath));
 
+        // Gửi ảnh đến Sightengine API để kiểm tra nội dung phản cảm
+        $sightengineResponse = Http::attach(
+            'media', file_get_contents($imagePath), $request->file('image')->getClientOriginalName()
+        )->post('https://api.sightengine.com/1.0/check.json', [
+            'models' => 'nudity,wad,offensive',
+            'api_user' => env('SIGHTENGINE_USER'),
+            'api_secret' => env('SIGHTENGINE_SECRET'),
+        ]);
+
+        $sightengineResult = $sightengineResponse->json();
+
+        // Debug toàn bộ response API để xem có key 'nudity' không
+        // dd($sightengineResult);
+
+        //  Kiểm tra nếu ảnh có nội dung phản cảm
+        if ($sightengineResult['nudity']['safe'] < 0.85 || $sightengineResult['offensive']['prob'] > 0.5) {
+            return back()->with('error', 'Ảnh chứa nội dung không phù hợp, vui lòng chọn ảnh khác.');
+        }
+
         // Gửi request đến Gemini API
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
@@ -122,6 +141,6 @@ class AIController extends Controller
         ]);
     }
 
-   
+
 }
 

@@ -8,5 +8,5 @@ use App\Http\Controllers\AIController;
 // });
 
 Route::post('/upload', [AIController::class, 'analyzeImage'])->name('upload');
-Route::get('/form-picture', [AIController::class, 'showFormPicture']);
+Route::get('/', [AIController::class, 'showFormPicture']);
 // Route::get('/form-picture', [AIController::class, 'showFormPicture']);

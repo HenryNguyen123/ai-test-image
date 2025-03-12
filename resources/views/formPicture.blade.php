@@ -8,6 +8,7 @@
 
 
 
+
 @if ($success = Session('success'))
 <div class="alert alert-success text-center" role="alert">
     <strong>{{ $success }}</strong>

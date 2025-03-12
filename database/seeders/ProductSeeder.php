@@ -15,7 +15,7 @@ class ProductSeeder extends Seeder
     {
         Product::create([
             'name' => 'cây lưỡi hổ',
-            'image' => 'bonsai.jpg',
+            'image' => 'cayluoiho.jfif',
             'price' => 250000,
             'min_area' => 5,
             'category' => 'Cây cảnh'
@@ -23,7 +23,7 @@ class ProductSeeder extends Seeder
 
         Product::create([
             'name' => 'Chậu Gốm Nhật',
-            'image' => 'chaugom.jpg',
+            'image' => 'chuaugomnhat.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
@@ -31,77 +31,77 @@ class ProductSeeder extends Seeder
 
         Product::create([
             'name' => 'cây sung cảnh',
-            'image' => 'chaugom.jpg',
+            'image' => 'chuaugomnhat.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây trầu bà lá xẻ',
-            'image' => 'chaugom.jpg',
+            'image' => 'caytraulaxe.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây phát tài khúc',
-            'image' => 'chaugom.jpg',
+            'image' => 'cayphattai.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây cao su lá lớn',
-            'image' => 'chaugom.jpg',
+            'image' => 'caycaosulalon.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây trầu bà vàng',
-            'image' => 'chaugom.jpg',
+            'image' => 'caybatraulavang.webp',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây kim tiền',
-            'image' => 'chaugom.jpg',
+            'image' => 'caykimtien.webp',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây thiết mộc lan',
-            'image' => 'chaugom.jpg',
+            'image' => 'caythietmocan.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây đuôi phượng',
-            'image' => 'chaugom.jpg',
+            'image' => 'caydduoiphuong.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'cây lan ý',
-            'image' => 'chaugom.jpg',
+            'image' => 'câylamy.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'Cây cảnh'
         ]);
         Product::create([
             'name' => 'chậu nhựa trắng hình trứng',
-            'image' => 'chaugom.jpg',
+            'image' => 'chaunhuatranghinhtrung.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'chậu cây'
         ]);
         Product::create([
             'name' => 'chậu nhựa trắng hình trụ bầu',
-            'image' => 'chaugom.jpg',
+            'image' => 'chaunhuatranghinhbau.jfif',
             'price' => 150000,
             'min_area' => 2,
             'category' => 'chậu cây'

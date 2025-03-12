@@ -83,7 +83,7 @@ class AIController extends Controller
 
             // Kiểm tra response từ API
             $results = $response->json();
-            // dd($results);
+            dd($results);
         } catch (\Exception $e) {
             return back()->with('error', 'Lỗi khi gọi API: ' . $e->getMessage());
         }
@@ -109,12 +109,13 @@ class AIController extends Controller
         if (!$data) {
             return back()->with('error', 'Lỗi giải mã JSON từ Gemini.');
         }
-        // dd($data);
+
+        // **********************************************************************
+        // **********************************************************************
         // Lấy danh sách từng loại sản phẩm
         $plants = $data['plants'] ?? [];
         $pots = $data['pots'] ?? [];
         $rocks = $data['rocks'] ?? [];
-
         // Loại bỏ phần tên khoa học trong ngoặc
         $cleanedPlants = [];
         foreach ($plants as $name => $count) {
@@ -134,22 +135,152 @@ class AIController extends Controller
         $plantTotal = 0;
         $potTotal = 0;
         $rockTotal = 0;
+        // tổng số lượng sản phẩm không có trong cửa hàng kiểm tra và để tạo ra số lượng sản phẩm thay thế
+        $plantMissing = 0;
+        $potMissing = 0;
+        $rockMissing = 0;
         // Tính tổng giá trị cây cảnh
         foreach ($plants as $plant => $quantity) {
             $price = Product::where('name', 'LIKE', "%$plant%")->value('price') ?? 0;
+            // tìm category của thể loại đó
+            $plantCategory = Product::where('name', 'LIKE', "%$plant%")->value('category') ?? 'Cây cảnh';
             $plantTotal += $price * $quantity;
+            if(!$price) {
+                $plantMissing += $quantity;
+            }
         }
         // Tính tổng giá trị chậu cây
         foreach ($pots as $pot => $quantity) {
             $price = Product::where('name', 'LIKE', "%$pot%")->value('price') ?? 0;
+            $potCategory = Product::where('name', 'LIKE', "%$pot%")->value('category') ?? 'chậu cây';
             $potTotal += $price * $quantity;
+            if(!$price) {
+                $potMissing += $quantity;
+            }
         }
         // Tính tổng giá trị đá trang trí
         foreach ($rocks as $rock => $quantity) {
             $price = Product::where('name', 'LIKE', "%$rock%")->value('price') ?? 0;
+            $rockCategory = Product::where('name', 'LIKE', "%$rock%")->value('category') ?? 'đá';
             $rockTotal += $price * $quantity;
+            if(!$price) {
+                $rockMissing += $quantity;
+            }
         }
 
+        // **********************************************************************
+        // **********************************************************************
+        // tạo ra sản phẩm thay thế với nhưng sản phẩm không tìm thấy trong api trả về
+        $storePlantsReplace  = [];
+        $storePotsReplace  = [];
+        $storeRocksReplace  = [];
+        // Mảng lưu tên sản phẩm đã được chọn để tránh trùng lặp
+        $addedPlantNames = [];
+        $addedPotNames = [];
+        $addedRockNames = [];
+        if ($plantMissing >0) {
+            for ($i = 1; $i <=$plantMissing; $i++ ) {
+                // Lấy một sản phẩm bất kỳ cùng category
+                $replacementPlant = Product::where('category', $plantCategory)->inRandomOrder()->first();
+                // Nếu tìm thấy sản phẩm thay thế
+                if ($replacementPlant) {
+                    if ($i ==1 ) {
+                        // Lưu sản phẩm đầu tiên vào danh sách
+                        $storePlantsReplace[] = $replacementPlant;
+                        $addedPlantNames[] =[
+                            'name' => $replacementPlant->name,
+                            'quantity' => 1
+                        ];
+                    }
+                    $price = $replacementPlant->price;
+                    $plantTotal += $price;
+                    // // Lưu sản phẩm thay thế vào danh sách
+                    // $addedPlantNames[] = $replacementPlant->name;
+
+
+                    // dd($addedPlantNames);
+                    // Tìm sản phẩm tiếp theo không trùng
+                    // Kiểm tra xem sản phẩm đã có trong danh sách chưa
+                    $nextReplacement = Product::where('category', $plantCategory)
+                    ->whereNotIn('name',  array_column($addedPlantNames, 'name'))
+                    ->inRandomOrder()
+                    ->first();
+                    if ($nextReplacement) {
+                        $storePlantsReplace[] = $nextReplacement;
+                        $addedPlantNames[] = [
+                            'name' => $nextReplacement->name,
+                            'quantity' => 1
+                        ];
+                    } else {
+                        foreach ($addedPlantNames as &$plant) {
+                            if ($plant['name'] === $replacementPlant->name) {
+                                $plant['quantity'] += 1;
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            }
+            dd($addedPlantNames);
+        }
+        if ($potMissing >0) {
+            for ($i = 1; $i <=$potMissing; $i++ ) {
+                // Lấy một sản phẩm bất kỳ cùng category
+                $replacementPot = Product::where('category', $potCategory)->inRandomOrder()->first();
+                // Nếu tìm thấy sản phẩm thay thế
+                if ($replacementPot) {
+                    if ($i ==1 ) {
+                        // Lưu sản phẩm đầu tiên vào danh sách
+                        $storePotsReplace[] = $replacementPot;
+                        $addedPotNames[] = $replacementPot->name;
+                    }
+                    $price = $replacementPot->price;
+                    $potTotal += $price;
+                    // // Lưu sản phẩm thay thế vào danh sách
+                    // $addedPotNames[] = $replacementPot->name;
+
+                    $nextReplacement = Product::where('category', $potCategory)
+                    ->whereNotIn('name', $addedPotNames)
+                    ->inRandomOrder()
+                    ->first();
+
+                    if ($nextReplacement) {
+                        $storePotsReplace[] = $nextReplacement;
+                        $addedPotNames[] = $nextReplacement->name;
+                    }
+                }
+            }
+        }
+        if ($rockMissing >0) {
+            for ($i = 1; $i <=$rockMissing; $i++ ) {
+                // Lấy một sản phẩm bất kỳ cùng category
+                $replacementRock = Product::where('category', $rockCategory)->inRandomOrder()->first();
+                // Nếu tìm thấy sản phẩm thay thế
+                if ($replacementRock) {
+                    if ($i ==1 ) {
+                        // Lưu sản phẩm đầu tiên vào danh sách
+                        $storeRocksReplace[] = $replacementRock;
+                        $addedRockNames[] = $replacementRock->name;
+                    }
+                    $price = $replacementRock->price;
+                    $rockTotal += $price;
+                    // // Lưu sản phẩm thay thế vào danh sách
+                    // $addedRockNames[] = $replacementRock->name;
+
+                    $nextReplacement = Product::where('category', $rockCategory)
+                    ->whereNotIn('name', $addedRockNames)
+                    ->inRandomOrder()
+                    ->first();
+
+                    if ($nextReplacement) {
+                        $storeRocksReplace[] = $nextReplacement;
+                        $addedRockNames[] = $nextReplacement->name;
+                    }
+                }
+            }
+        }
+        // dd($storePotsReplace);
         // Tổng giá trị tất cả sản phẩm
         $totalPrice = $plantTotal + $potTotal + $rockTotal;
 
@@ -182,22 +313,32 @@ class AIController extends Controller
         // Gợi ý sản phẩm dựa trên diện tích sân vườn
         $recommendations = Product::where('min_area', '<=', $request->area)
             ->orderBy('price', 'desc')
-            ->limit(5)
+            ->limit(8)
             ->get();
 
         return view('result', [
             'description' => $description,
+
             'plants' => $plants,
             'pots' => $pots,
             'rocks' => $rocks,
+
             'plantCount' => $plantCount,
             'potCount' => $potCount,
             'rockCount' => $rockCount,
+
+            'storePlantsReplace' => $storePlantsReplace,
+            'storePotsReplace' => $storePotsReplace,
+            'storeRocksReplace' => $storeRocksReplace,
+
             'totalPrice' => $totalPrice,
+
             'storePlants' => $storePlants,
             'storePots' => $storePots,
             'storeRocks' => $storeRocks,
+
             'area' => $request->area,
+
             'recommendations' => $recommendations
         ]);
     }

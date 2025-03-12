@@ -18,7 +18,38 @@
                 <li class="list-group-item"> Chậu cây: <strong>{{ $potCount }}</strong></li>
                 <li class="list-group-item"> Đá trang trí: <strong>{{ $rockCount }}</strong></li>
             </ul>
+            <h3>SẢN PHẨM TÌM THẤY TRONG ẢNH</h3>
+            <p>*********** tên cây *************</p>
+            <ul class="list-group">
+                @foreach($plants as $plant=>$quantity)
+                    <li class="list-group-item"> Cây cảnh: <strong>{{ $plant }} có số lượng ({{$quantity}})</strong></li>
+                @endforeach
+            </ul>
+            <p>*********** tên chậu cây *************</p>
+            <ul class="list-group">
+                @foreach($pots as $pot=>$quantity)
+                    <li class="list-group-item"> Cây cảnh: <strong>{{ $pot }} có số lượng ({{$quantity}})</strong></li>
+                @endforeach
+            </ul>
+            <p>*********** loại đá *************</p>
+            <ul class="list-group">
+                @foreach($rocks as $rock=>$quantity)
+                    <li class="list-group-item"> Cây cảnh: <strong>{{ $rock }} có số lượng ({{$quantity}})</strong></li>
+                @endforeach
+            </ul>
 
+            <h3>CÁC SẢN PHẨM CÓ TRONG CỬA HÀNG</h3>
+            <ul class="list-group">
+                @foreach($storePlants as $storePlant)
+                    <li class="list-group-item"> Cây cảnh: <strong>{{ $storePlant->name }} ---- giá {{ number_format($storePlant->price, 0, ',', '.') }} VND</strong></li>
+                @endforeach
+                @foreach($storePots as $storePot)
+                    <li class="list-group-item"> chậu cây: <strong>{{ $storePot->name }} ---- giá {{ number_format($storePot->price, 0, ',', '.') }} VND</strong></li>
+                @endforeach
+                @foreach($storeRocks as $storeRock)
+                    <li class="list-group-item"> Đá: <strong>{{ $storeRock->name }} ---- giá {{ number_format($storeRock->price, 0, ',', '.') }} VND</strong></li>
+                @endforeach
+            </ul>
             Tổng giá trị dự đoán
             <h5 class="mt-4 text-danger">Tổng giá trị dự đoán: <strong>{{ number_format($totalPrice, 0, ',', '.') }} VND</strong></h5>
 

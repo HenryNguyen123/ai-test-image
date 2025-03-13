@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('image'); // Đường dẫn hình ảnh
             $table->decimal('price', 10, 2); // Giá sản phẩm
             $table->integer('min_area'); // Diện tích tối thiểu gợi ý sản phẩm
-            $table->string('category'); // Loại sản phẩm (cây cảnh, chậu, vật dụng, đá trang trí)
+            $table->string('category'); // Loại sản phẩm (cây cảnh, chậu, vật dụng, đá trang trí)8
             $table->timestamps();
         });
     }

@@ -68,24 +68,24 @@
             <ul class="list-group">
                 @foreach($storePlantsReplace as $PlantsReplaceItem)
                     <li class="list-group-item">
-                         Cây cảnh: <strong>{{ $PlantsReplaceItem->name }} ---- giá {{ number_format($PlantsReplaceItem->price, 0, ',', '.') }} VND</strong>
-                         <img src="{{ asset('uploads/' . $PlantsReplaceItem->image) }}" class="card-img-top" alt="{{ $PlantsReplaceItem->name }}" width="100px">
+                         Cây cảnh: <strong>{{ $PlantsReplaceItem['product']->name }} ---- số lương sản phẩm """<< {{ $PlantsReplaceItem['quantity']}} >>""" ---- giá {{ number_format($PlantsReplaceItem['product']->price, 0, ',', '.') }} VND</strong>
+                         <img src="{{ asset('uploads/' . $PlantsReplaceItem['product']->image) }}" class="card-img-top" alt="{{ $PlantsReplaceItem['product']->name }}" width="100px">
                     </li>
                 @endforeach
             </ul>
             <ul class="list-group">
                 @foreach($storePotsReplace as $PotsReplaceItem)
                     <li class="list-group-item">
-                         chậu cây: <strong>{{ $PotsReplaceItem->name }} ---- giá {{ number_format($PotsReplaceItem->price, 0, ',', '.') }} VND</strong>
-                         <img src="{{ asset('uploads/' .$PotsReplaceItem->image) }}" class="card-img-top" alt="{{ $PotsReplaceItem->name }}" width="100px">
+                         chậu cây: <strong>{{ $PotsReplaceItem['product']->name }} ---- số lương sản phẩm """<< {{ $PotsReplaceItem['quantity']}} >>""" ----  ---- giá {{ number_format($PotsReplaceItem['product']->price, 0, ',', '.') }} VND</strong>
+                         <img src="{{ asset('uploads/' .$PotsReplaceItem['product']->image) }}" class="card-img-top" alt="{{ $PotsReplaceItem['product']->name }}" width="100px">
                     </li>
                 @endforeach
             </ul>
             <ul class="list-group">
                 @foreach($storeRocksReplace as $RocksReplaceItem)
                     <li class="list-group-item">
-                        Đá: <strong>{{ $RocksReplaceItem->name }} ---- giá {{ number_format($RocksReplaceItem->price, 0, ',', '.') }} VND</strong>
-                        <img src="{{ asset('uploads/' .$RocksReplaceItem->image) }}" class="card-img-top" alt="{{ $RocksReplaceItem->name }}" width="100px">
+                        Đá: <strong>{{ $RocksReplaceItem['product']->name }} ---- số lương sản phẩm """<< {{ $RocksReplaceItem['quantity']}} >>""" ----  ---- giá {{ number_format($RocksReplaceItem['product']->price, 0, ',', '.') }} VND</strong>
+                        <img src="{{ asset('uploads/' .$RocksReplaceItem['product']->image) }}" class="card-img-top" alt="{{ $RocksReplaceItem['product']->name }}" width="100px">
                     </li>
                 @endforeach
             </ul>

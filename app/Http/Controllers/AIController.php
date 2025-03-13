@@ -83,7 +83,7 @@ class AIController extends Controller
 
             // Kiểm tra response từ API
             $results = $response->json();
-            dd($results);
+            // dd($results);
         } catch (\Exception $e) {
             return back()->with('error', 'Lỗi khi gọi API: ' . $e->getMessage());
         }
@@ -111,6 +111,7 @@ class AIController extends Controller
         }
 
         // **********************************************************************
+        // ***************LẤY CÁC SẢN PHẨM TRONG CỬA HÀNG HIỆN CÓ****************
         // **********************************************************************
         // Lấy danh sách từng loại sản phẩm
         $plants = $data['plants'] ?? [];
@@ -139,36 +140,48 @@ class AIController extends Controller
         $plantMissing = 0;
         $potMissing = 0;
         $rockMissing = 0;
+        $plantCategory = 'Cây cảnh';
+        $potCategory = 'chậu cây';
+        $rockCategory = 'đá';
         // Tính tổng giá trị cây cảnh
+        // **** TRONG ĐỒ ÁN CẦN KIỂM TRA SỐ LƯỢNG API TRẢ VỀ KIỂM TRA VỚI SỐ LƯỢNG SẢN PHẨM TRONG KHO
+        // NẾU ĐỦ SỐ LƯỢNG CUNG CẤP THÌ BỎ QUA, NẾU THIẾU THÌ CỘNG VÀO MISSING ****
+        //  note: cần cập nhật thêm cây đó có số lượng là bao nhiêu <=============
         foreach ($plants as $plant => $quantity) {
-            $price = Product::where('name', 'LIKE', "%$plant%")->value('price') ?? 0;
-            // tìm category của thể loại đó
-            $plantCategory = Product::where('name', 'LIKE', "%$plant%")->value('category') ?? 'Cây cảnh';
-            $plantTotal += $price * $quantity;
-            if(!$price) {
+            $productPlant = Product::where('name', 'LIKE', "%$plant%")->first();
+            if(!$productPlant) {
                 $plantMissing += $quantity;
+            } else {
+                // tìm category của thể loại đó
+                $plantCategory = $productPlant->category ?? 'Cây cảnh';
+                $plantTotal += $productPlant->price * $quantity;
             }
         }
         // Tính tổng giá trị chậu cây
         foreach ($pots as $pot => $quantity) {
-            $price = Product::where('name', 'LIKE', "%$pot%")->value('price') ?? 0;
-            $potCategory = Product::where('name', 'LIKE', "%$pot%")->value('category') ?? 'chậu cây';
-            $potTotal += $price * $quantity;
-            if(!$price) {
+            $productPot = Product::where('name', 'LIKE', "%$pot%")->first();
+            if(!$productPot) {
                 $potMissing += $quantity;
+            } else {
+                // tìm category của thể loại đó
+                $potCategory = $productPot->category ?? 'chậu cây';
+                $potTotal += $productPot->price * $quantity;
             }
         }
         // Tính tổng giá trị đá trang trí
         foreach ($rocks as $rock => $quantity) {
-            $price = Product::where('name', 'LIKE', "%$rock%")->value('price') ?? 0;
-            $rockCategory = Product::where('name', 'LIKE', "%$rock%")->value('category') ?? 'đá';
-            $rockTotal += $price * $quantity;
-            if(!$price) {
+            $productRock = Product::where('name', 'LIKE', "%$rock%")->first();
+            if(!$productRock) {
                 $rockMissing += $quantity;
+            } else {
+                // tìm category của thể loại đó
+                $rockCategory = $productRock->category ?? 'đá';
+                $rockTotal += $productRock->price * $quantity;
             }
         }
 
         // **********************************************************************
+        // *************TÌM KIẾM SẢN PHẨM THAY THẾ TRONG CỬA HÀNG****************
         // **********************************************************************
         // tạo ra sản phẩm thay thế với nhưng sản phẩm không tìm thấy trong api trả về
         $storePlantsReplace  = [];
@@ -178,76 +191,81 @@ class AIController extends Controller
         $addedPlantNames = [];
         $addedPotNames = [];
         $addedRockNames = [];
+
         if ($plantMissing >0) {
-            for ($i = 1; $i <=$plantMissing; $i++ ) {
-                // Lấy một sản phẩm bất kỳ cùng category
-                $replacementPlant = Product::where('category', $plantCategory)->inRandomOrder()->first();
-                // Nếu tìm thấy sản phẩm thay thế
-                if ($replacementPlant) {
-                    if ($i ==1 ) {
-                        // Lưu sản phẩm đầu tiên vào danh sách
-                        $storePlantsReplace[] = $replacementPlant;
-                        $addedPlantNames[] =[
-                            'name' => $replacementPlant->name,
-                            'quantity' => 1
-                        ];
-                    }
+                for ($i = 1; $i <=$plantMissing; $i++ ) {
+                    // Lấy một sản phẩm bất kỳ cùng category
+                    $replacementPlant = Product::where('category', $plantCategory)->inRandomOrder()->first();
+                    // tính giá tiền
                     $price = $replacementPlant->price;
                     $plantTotal += $price;
-                    // // Lưu sản phẩm thay thế vào danh sách
-                    // $addedPlantNames[] = $replacementPlant->name;
+                    // Nếu tìm thấy sản phẩm thay thế
+                    if ($replacementPlant) {
 
+                        if ($i ==1 ) {
+                            // Lưu sản phẩm đầu tiên vào danh sách
+                            $storePlantsReplace[] = [
+                                'product' =>  $replacementPlant,
+                                'quantity' => 1,
+                            ];
+                            $addedPlantNames[] = $replacementPlant->name;
+                        }
 
-                    // dd($addedPlantNames);
-                    // Tìm sản phẩm tiếp theo không trùng
-                    // Kiểm tra xem sản phẩm đã có trong danh sách chưa
-                    $nextReplacement = Product::where('category', $plantCategory)
-                    ->whereNotIn('name',  array_column($addedPlantNames, 'name'))
-                    ->inRandomOrder()
-                    ->first();
-                    if ($nextReplacement) {
-                        $storePlantsReplace[] = $nextReplacement;
-                        $addedPlantNames[] = [
-                            'name' => $nextReplacement->name,
-                            'quantity' => 1
-                        ];
-                    } else {
-                        foreach ($addedPlantNames as &$plant) {
-                            if ($plant['name'] === $replacementPlant->name) {
-                                $plant['quantity'] += 1;
-                                break;
+                        // Kiểm tra nếu sản phẩm chưa có trong danh sách thì thêm vào
+                        if ($i >= 2) {
+                            if (!in_array($replacementPlant->name, $addedPlantNames)) {
+                                $storePlantsReplace[] = [
+                                    'product' =>  $replacementPlant,
+                                    'quantity' => 1,
+                                ];
+                                $addedPlantNames[] =  $replacementPlant->name;
+                            } else {
+                                // Nếu sản phẩm đã có trong danh sách, tăng số lượng
+                                foreach ($storePlantsReplace as &$item) {
+                                    if ($item['product']->name == $replacementPlant->name) {
+                                        $item['quantity'] += 1;
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
-
                 }
             }
-            dd($addedPlantNames);
-        }
         if ($potMissing >0) {
             for ($i = 1; $i <=$potMissing; $i++ ) {
                 // Lấy một sản phẩm bất kỳ cùng category
                 $replacementPot = Product::where('category', $potCategory)->inRandomOrder()->first();
+                // tính giá tiền
+                $price = $replacementPot->price;
+                $potTotal += $price;
                 // Nếu tìm thấy sản phẩm thay thế
                 if ($replacementPot) {
                     if ($i ==1 ) {
                         // Lưu sản phẩm đầu tiên vào danh sách
-                        $storePotsReplace[] = $replacementPot;
+                        $storePotsReplace[] = [
+                            'product' =>  $replacementPot,
+                            'quantity' => 1,
+                        ];
                         $addedPotNames[] = $replacementPot->name;
                     }
-                    $price = $replacementPot->price;
-                    $potTotal += $price;
                     // // Lưu sản phẩm thay thế vào danh sách
-                    // $addedPotNames[] = $replacementPot->name;
-
-                    $nextReplacement = Product::where('category', $potCategory)
-                    ->whereNotIn('name', $addedPotNames)
-                    ->inRandomOrder()
-                    ->first();
-
-                    if ($nextReplacement) {
-                        $storePotsReplace[] = $nextReplacement;
-                        $addedPotNames[] = $nextReplacement->name;
+                    if ($i >= 2) {
+                        if (!in_array($replacementPot->name, $addedPotNames)) {
+                            $storePotsReplace[] = [
+                                'product' =>  $replacementPot,
+                                'quantity' => 1,
+                            ];
+                            $addedPotNames[] = $replacementPot->name;
+                        }else {
+                            // Nếu sản phẩm đã có trong danh sách, tăng số lượng
+                            foreach ($storePotsReplace as &$item) {
+                                if ($item['product']->name == $replacementPot->name) {
+                                    $item['quantity'] += 1;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -256,31 +274,41 @@ class AIController extends Controller
             for ($i = 1; $i <=$rockMissing; $i++ ) {
                 // Lấy một sản phẩm bất kỳ cùng category
                 $replacementRock = Product::where('category', $rockCategory)->inRandomOrder()->first();
+                // tính giá tiền
+                $price = $replacementRock->price;
+                $rockTotal += $price;
                 // Nếu tìm thấy sản phẩm thay thế
                 if ($replacementRock) {
                     if ($i ==1 ) {
                         // Lưu sản phẩm đầu tiên vào danh sách
-                        $storeRocksReplace[] = $replacementRock;
+                        $storeRocksReplace[] = [
+                            'product' =>  $replacementRock,
+                            'quantity' => 1,
+                        ];
                         $addedRockNames[] = $replacementRock->name;
                     }
-                    $price = $replacementRock->price;
-                    $rockTotal += $price;
                     // // Lưu sản phẩm thay thế vào danh sách
-                    // $addedRockNames[] = $replacementRock->name;
-
-                    $nextReplacement = Product::where('category', $rockCategory)
-                    ->whereNotIn('name', $addedRockNames)
-                    ->inRandomOrder()
-                    ->first();
-
-                    if ($nextReplacement) {
-                        $storeRocksReplace[] = $nextReplacement;
-                        $addedRockNames[] = $nextReplacement->name;
+                    if ($i >=2 ) {
+                        if (!in_array($replacementRock->name, $addedRockNames)) {
+                            $storeRocksReplace[] = [
+                                'product' =>  $replacementRock,
+                                'quantity' => 1,
+                            ];
+                            $addedRockNames[] = $replacementRock->name;
+                        }else {
+                            // Nếu sản phẩm đã có trong danh sách, tăng số lượng
+                            foreach ($storeRocksReplace as &$item) {
+                                if ($item['product']->name == $replacementRock->name) {
+                                    $item['quantity'] += 1;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        // dd($storePotsReplace);
+
         // Tổng giá trị tất cả sản phẩm
         $totalPrice = $plantTotal + $potTotal + $rockTotal;
 
@@ -327,129 +355,21 @@ class AIController extends Controller
             'potCount' => $potCount,
             'rockCount' => $rockCount,
 
-            'storePlantsReplace' => $storePlantsReplace,
-            'storePotsReplace' => $storePotsReplace,
-            'storeRocksReplace' => $storeRocksReplace,
-
             'totalPrice' => $totalPrice,
 
             'storePlants' => $storePlants,
             'storePots' => $storePots,
             'storeRocks' => $storeRocks,
 
+            'storePlantsReplace' => $storePlantsReplace,
+            'storePotsReplace' => $storePotsReplace,
+            'storeRocksReplace' => $storeRocksReplace,
+
             'area' => $request->area,
 
             'recommendations' => $recommendations
         ]);
     }
-
-    // public function analyzeImage(Request $request)
-    // {
-    //     try {
-    //         // Xác thực input
-    //         $request->validate([
-    //             'image' => 'required|image|mimes:jpeg,png,jpg,jfif|max:2048',
-    //             'area' => 'required|numeric|min:1',
-    //         ]);
-
-    //         // Đọc file ảnh & mã hóa Base64
-    //         $imagePath = $request->file('image')->getRealPath();
-    //         $imageData = base64_encode(file_get_contents($imagePath));
-
-    //         // Gửi ảnh đến Sightengine API để kiểm tra nội dung phản cảm
-    //         $sightengineResponse = Http::attach(
-    //             'media', file_get_contents($imagePath), $request->file('image')->getClientOriginalName()
-    //         )->post('https://api.sightengine.com/1.0/check.json', [
-    //             'models' => 'nudity,wad,offensive',
-    //             'api_user' => env('SIGHTENGINE_USER'),
-    //             'api_secret' => env('SIGHTENGINE_SECRET'),
-    //         ]);
-
-    //         $sightengineResult = $sightengineResponse->json();
-
-    //         // Kiểm tra nếu ảnh có nội dung phản cảm
-    //         if ($sightengineResult['nudity']['safe'] < 0.85 || $sightengineResult['offensive']['prob'] > 0.5) {
-    //             return back()->with('error', 'Ảnh chứa nội dung không phù hợp, vui lòng chọn ảnh khác.');
-    //         }
-
-    //         // Gửi request đến Gemini API
-    //         $response = Http::withHeaders([
-    //             'Content-Type' => 'application/json',
-    //         ])->post("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={$this->apiKey}", [
-    //             'contents' => [
-    //                 'parts' => [
-    //                     ['text' => "Hãy phân tích hình ảnh này và xác định các loại cây cảnh, chậu cây, đá trang trí có trong ảnh.
-    //                         - Trả về kết quả dưới dạng JSON gồm:
-    //                         {
-    //                         'plants': {'cây bonsai': 2, 'cây trầu bà': 3},
-    //                         'pots': {'chậu đất nung': 2, 'chậu gốm': 1},
-    //                         'rocks': {'đá cuội': 5, 'đá trắng': 2}
-    //                         }
-    //                     "],
-    //                     [
-    //                         'inlineData' => [
-    //                             'mimeType' => 'image/jpeg',
-    //                             'data' => $imageData
-    //                         ]
-    //                     ]
-    //                 ]
-    //             ]
-    //         ]);
-
-    //         // Kiểm tra response từ API
-    //         $results = $response->json();
-
-    //         if (!isset($results['candidates'][0]['content']['parts'][0]['text'])) {
-    //             return back()->with('error', 'API không nhận diện được hình ảnh.');
-    //         }
-
-    //         // Lấy dữ liệu JSON từ response
-    //         $jsonText = $results['candidates'][0]['content']['parts'][0]['text'];
-    //         $data = json_decode($jsonText, true);
-
-    //         if (!$data) {
-    //             return back()->with('error', 'Dữ liệu từ API không hợp lệ.');
-    //         }
-
-    //         // Lấy danh sách từng loại sản phẩm
-    //         $plants = $data['plants'] ?? [];
-    //         $pots = $data['pots'] ?? [];
-    //         $rocks = $data['rocks'] ?? [];
-
-    //         // Đếm tổng số lượng từng loại
-    //         $plantCount = array_sum($plants);
-    //         $potCount = array_sum($pots);
-    //         $rockCount = array_sum($rocks);
-    //         dd($plants);
-    //         // Truy vấn giá trung bình từ bảng products
-    //         $plantPrice = Product::whereIn('name', array_keys($plants))->avg('price') ?? 0;
-    //         $potPrice = Product::whereIn('name', array_keys($pots))->avg('price') ?? 0;
-    //         $rockPrice = Product::whereIn('name', array_keys($rocks))->avg('price') ?? 0;
-
-    //         // Tính tổng giá trị
-    //         $totalPrice = ($plantCount * $plantPrice) + ($potCount * $potPrice) + ($rockCount * $rockPrice);
-
-    //         // Gợi ý sản phẩm dựa trên diện tích sân vườn
-    //         $recommendations = Product::where('min_area', '<=', $request->area)
-    //             ->orderBy('price', 'desc')
-    //             ->limit(5)
-    //             ->get();
-
-    //         return view('result', [
-    //             'plants' => $plants,
-    //             'pots' => $pots,
-    //             'rocks' => $rocks,
-    //             'plantCount' => $plantCount,
-    //             'potCount' => $potCount,
-    //             'rockCount' => $rockCount,
-    //             'totalPrice' => $totalPrice,
-    //             'area' => $request->area,
-    //             'recommendations' => $recommendations
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return back()->with('error', 'Lỗi khi gọi API: ' . $e->getMessage());
-    //     }
-    // }
 
 }
 
